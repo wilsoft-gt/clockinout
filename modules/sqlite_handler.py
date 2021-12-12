@@ -79,7 +79,6 @@ class Database:
             print(er)
             return er
             
-
     #create a new user
     def create_user(self, data):
         """Create a user on the user table.
@@ -126,6 +125,29 @@ class Database:
             print(e)
             return er
 
+    def get_user(self, eid):
+        """Return a user record.
+            [Attributes]
+            eid: a string with the user EID
+        """
+        try:
+            result = self.cursor.execute(f"SELECT * FROM users WHERE eid='{eid}'").fetchone()
+            return result
+        except sqlite3.DatabaseError as e:
+            er=f"ERROR: user not found {e}"
+            print(er)
+            return er
+
+    def get_all_users(self):
+        """Return all the users in the database"""
+        try:
+            result = self.cursor.execute("SELECT id, first_name, last_name, eid, clock_in_time, clock_out_time, is_admin FROM users;").fetchall()
+            return result
+        except sqlite3.DatabaseError as e:
+            er = f"ERROR: {e}"
+            print(er)
+            return(er)
+
     #Create a new timestamp
     def create_timestamp(self, data):
         """Create a timestamp with the given data.
@@ -145,6 +167,36 @@ class Database:
 
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to create timestamp {e}"
+            print(er)
+            return er
+
+    def get_all_timestamps_form_user(self, user_id):
+        """Returns all the timestamps from the given user"""
+        try:
+            result = self.cursor.execute(f"SELECT * FROM timestamp WHERE user='{user_id}'").fetchall()
+            return result
+        
+        except sqlite3.DatabaseError as e:
+            er = f"ERROR: {e}"
+            print(er)
+            return(er)
+        
+
+    #get a timestamp
+    def get_timestamp(self, eid, date=datetime.today().strftime("%m/%d/%Y")):
+        """Get a user given timestamp by EID and date
+            [Arguments]
+            eid: a string with the user eid
+            date: the date to query [optional], return the current
+                    date if no value is given
+        """
+        try:
+            query = f"SELECT * FROM timestamp WHERE date='{date}' and user='{eid}'"
+            result = self.cursor.execute(query).fetchone()
+            return result
+        
+        except sqlite3.DatabaseError as e:
+            er = f"ERROR: unable to retrieve the timestamp {e}"
             print(er)
             return er
 
@@ -170,7 +222,6 @@ class Database:
             print(er)
             return er
         
-
     #Check if the EID and password are correct
     def login(self, credentials):
         """Check if the eid and password are correct
@@ -180,6 +231,7 @@ class Database:
         """
         try:
             user = self.cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
+            print(credentials)
             if user:
                 if user[USER_INDEXES.PASSWORD] == encrypt(credentials['password']):
                     return {"is_loged": True, "response": user}

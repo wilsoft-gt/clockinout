@@ -7,3 +7,5 @@ def main():
 if __name__ == '__main__':
     Database().initial_setup()
     main()
+
+
