@@ -1,0 +1,68 @@
+#:kivy 2.0.0
+
+<LoginGridLayout>:
+    cols: 1
+    size_hint: 0.6, 0.7
+    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+    spacing: 20
+
+    Image:
+        source:"resources/logo.png"
+        size_hint_y: None
+        height: 200
+
+    GridLayout:
+        id: top_layout
+        cols: 2
+        size_hint: (1,1)
+        spacing: 10
+
+        Label:
+            id: eid
+            text: "EID:"
+            font_size: "18sp"
+            size_hint_x: None
+            width: 100
+            bold: True
+            color: "#878DFA"
+            text_size: self.size
+            halign: "left"
+            valign: "middle"
+
+        TextInput:
+            write_tab: False
+            multiline: False
+            size_hint:(1,0.5)
+            text: "EID123456"
+
+        Label:
+            id: password
+            text: "Password:"
+            font_size: "18sp"
+            size_hint_x: None
+            width: 100
+            bold: True
+            color: "#878DFA"
+            text_size: self.size
+            halign: "left"
+            valign: "middle"
+
+        TextInput:
+            multiline: False
+            write_tab: False
+            password: True
+            size_hint: (1, 0.5)
+            text: "ASDF123ASDF"
+
+    Button:
+        text: "Login"
+        size_hint: (1, 0.7)
+        bold: True
+        background_color: "#878DFA"
+        on_press: root.login_db(args) 
+
+    Label:
+        size_hint:(1,0.3)
+        bold: True
+        color: "#FF0000"
+

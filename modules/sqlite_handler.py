@@ -41,8 +41,8 @@ class Database:
             name: string with the table name.
         """
         try:
-            self.cursor.execute("DROP TABLE IF EXISTS {name};")
-            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = '{name}';").fetchone()
+            self.cursor.execute("DROP TABLE IF EXISTS ?;", [name])
+            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = ?;", [name]).fetchone()
             return result
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to delete table {e}"
@@ -71,7 +71,7 @@ class Database:
             ON DELETE CASCADE
             );"""
             self.cursor.execute(query)
-            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{name}';").fetchone()
+            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;", [name]).fetchone()
             return result
 
         except sqlite3.DatabaseError as e:

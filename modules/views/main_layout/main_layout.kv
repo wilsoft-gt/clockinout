@@ -1,0 +1,38 @@
+#:kivy 2.0.0
+
+<AdminMainLayout>:
+    cols: 1
+
+    GridLayout:
+        cols: 2
+        Button:
+            text: "Create user"
+            background_color: "#878DFA"
+            on_press: root.go_create_user(args)
+        
+        Button:
+            text: "Update user"
+            background_color: "#878DFA"
+            on_press: root.go_update_user(args)
+
+    GridLayout:
+        cols: 2
+        Button:
+            text: "Update Timestamp"
+            background_color: "#878DFA"
+            on_press: root.go_update_timestamp(args)
+
+        Button:
+            text: "Clock in out"
+            background_color: "#878DFA"
+            on_press: root.go_self_timestamp(args)
+
+    GridLayout:
+        cols: 1
+        Button:
+            text: "Generate report"
+            background_color: "#878DFA"
+            on_press: root.go_save_report(args)
+
+
+    

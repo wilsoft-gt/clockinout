@@ -2,7 +2,18 @@ from .sqlite_handler import Database
 from .helpers import USER_INDEXES, TIMESTAMP_INDEXES, DateTimeHelper, User_data
 from datetime import datetime
 import csv
-import kivy
+from kivy.lang import Builder
+
+from .views.login.login import LoginGridLayout
+Builder.load_file('modules/views/login/loginApp.kv')
+
+from .views.main_layout.main_layout import AdminMainLayout
+Builder.load_file('modules/views/main_layout/main_layout.kv')
+
+from .views.user_menu.user_menu import UserMenuGridLayout
+Builder.load_file('modules/views/user_menu/user_menu.kv')
+
+
 from kivy.app import App
 from kivy.metrics import dp
 from kivy.uix.label import Label
@@ -15,6 +26,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager, Screen, RiseInTransition
 from kivy.uix.behaviors import ButtonBehavior
+
+
 
 class ImageButton(ButtonBehavior, Image):
     def __init__(self, released, pressed, callback, **kwargs):
@@ -30,259 +43,6 @@ class ImageButton(ButtonBehavior, Image):
     def on_release(self):
         self.source = self.released
         self.callback()
-
-class LoginGridLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(LoginGridLayout, self).__init__(**kwargs)
-        self.db = Database()
-        #layout properties
-        self.cols = 1
-        self.size_hint = (0.6, 0.7)
-        self.pos_hint = {"center_x": 0.5, "center_y": 0.5}
-        self.spacing = 20
-        #Widgets
-        
-        #top layout
-        self.top_grid = GridLayout(
-                cols=2,
-                size_hint=(1,0.6),
-                spacing=10
-            )
-
-        self.top_grid.add_widget(Label(
-            text="EID:",
-            font_size=18,
-            size_hint_x=None,
-            width=100,
-            bold=True,
-            color="#878DFA",
-            text_size=self.size,
-            halign="left",
-            valign="middle"
-        ))
-        
-        self.eid = TextInput(
-                write_tab=False,
-                multiline=False,
-                size_hint=(1,0.5),
-                text="EID123456"
-            )
-        self.top_grid.add_widget(self.eid)
-
-        self.top_grid.add_widget(Label(
-            text="Password:",
-            font_size=18,
-            size_hint_x=None,
-            width=100,
-            bold=True,
-            color="#878DFA",
-            text_size=self.size,
-            halign="left",
-            valign="middle"
-        ))
-
-        self.password = TextInput(
-                multiline=False,
-                write_tab=False,
-                password = True,
-                size_hint=(1,0.5),
-                text="ASDF123ASDF"
-                )
-        self.top_grid.add_widget(self.password)
-
-        self.logo = Image(
-                source="resources/logo.png",
-                size_hint_y=None,
-                height=200
-                )
-        self.add_widget(self.logo)
-
-        self.add_widget(self.top_grid)
-
-        self.login_button = Button(
-                text="Login",
-                size_hint=(1, 0.5),
-                bold=True,
-                background_color = "#878DFA"
-        )
-        self.login_button.bind(on_press=self.login_db) 
-        self.add_widget(self.login_button)
-
-        self.result = Label(
-                size_hint=(1,0.3), 
-                bold=True,
-                color="#FF0000"
-                )
-        self.add_widget(self.result)
-
-    def login_db(self, value):
-        global USER_DATA
-        cred = {
-            "eid": self.eid.text,
-            "password": self.password.text
-        }
-        result = self.db.login(cred)
-
-        if type(result) is dict and result["is_loged"] == True:
-            is_admin=result["response"][USER_INDEXES.IS_ADMIN]
-            self.result.text = ""
-            self.eid.text = ""
-            self.password.text = ""
-            app = App.get_running_app()
-            if is_admin == 1:
-                app.root.get_screen("main_menu").adminmainmenulayout.set_user_data(result["response"])
-                app.root.current="main_menu"
-            else:
-                app.root.get_screen("user").usermenugridlayout.set_user_data(result["response"])
-                app.root.current="user"
-        
-        else:
-            self.eid.text = ""
-            self.password.text = ""
-            self.result.text=str(result)
-
-class AdminMainLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(AdminMainLayout, self).__init__(**kwargs)
-        self.app = App.get_running_app()
-        self.user_data = []
-        self.cols = 1
-
-        self.top_grid = GridLayout(cols=2)
-        self.create_user = Button(text="Create user", on_press=self.go_create_user,background_color = "#878DFA")
-        self.update_user = Button(text="Update user", on_press=self.go_update_user,background_color = "#878DFA")
-        self.top_grid.add_widget(self.create_user)
-        self.top_grid.add_widget(self.update_user)
-
-        self.middle_grid = GridLayout(cols=2)
-        self.update_timestamp = Button(text="Update Timestamp", on_press=self.go_update_timestamp,background_color = "#878DFA")
-        self.self_timestamp = Button(text="Clock in out", on_press=self.go_self_timestamp,background_color = "#878DFA")
-        self.middle_grid.add_widget(self.update_timestamp)
-        self.middle_grid.add_widget(self.self_timestamp)
-
-        self.bottom_grid = GridLayout(cols=1)
-        self.generate_report = Button(text="Generate report", on_press=self.go_save_report, background_color = "#878DFA")
-        self.bottom_grid.add_widget(self.generate_report)
-
-        self.add_widget(self.top_grid)
-        self.add_widget(self.middle_grid)
-        self.add_widget(self.bottom_grid)
-
-    def go_create_user(self, instance):
-        self.app.root.current = "create_user_menu"
-
-    def go_update_user(self, instance):
-        self.app.root.current = "update_user_menu"
-
-    def go_update_timestamp(self, instance):
-        self.app.root.current = "update_timestamp_menu"
-
-    def go_self_timestamp(self, instance):
-        self.app.root.get_screen("user").usermenugridlayout.set_user_data(self.user_data)
-        self.app.root.current = "user"
-        
-    def go_save_report(self, instance):
-        self.app.root.current = "save_report"
-
-    def set_user_data(self, data):
-        self.user_data = data
-
-class UserMenuGridLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(UserMenuGridLayout, self).__init__(**kwargs)
-        self.db = Database()
-      
-        self.user_data = {}
-
-        #Settings for the main layout
-        self.cols = 1
-        self.padding = 75
-        self.spacing = 20 
-        self.minimum_height = 30
-
-        #Layout for the 2 image buttons
-        self.inner_grid = GridLayout(cols=2, size_hint_y=None, height=400)
-
-        self.in_button = ImageButton(released="resources/in_released.png", pressed="resources/in_pressed.png", callback=self.clock_in)
-        self.inner_grid.add_widget(self.in_button)
-
-        self.out_button = ImageButton(released="resources/out_released.png", pressed="resources/out_pressed.png", callback=self.clock_out)
-        self.inner_grid.add_widget(self.out_button)
-        
-
-        #welcome label
-        self.welcome = Label(font_size=40, color="#878DFA")
-        self.add_widget(self.welcome)
-
-        self.add_widget(self.inner_grid)
-
-        #bottom option layout
-        self.bottom_grid = GridLayout(rows=2, size=(0.5,0.3), row_default_height=30, row_force_default=True, center=(0.5,0.5))
-        
-        self.back = Button(
-                text="Exit",
-                size_hint=(1,1),
-                background_color="#878DFA"
-                )
-        self.back.bind(on_press=self.go_back)
-        self.bottom_grid.add_widget(self.back)
-        
-        self.message = Label(color="red", size_hint=(1,1))
-        self.bottom_grid.add_widget(self.message)
-
-        self.add_widget(self.bottom_grid)
-
-    def clock_in(self):
-        """Check if there is already a timestamp and
-        create punches for lates, early, etc."""
-        try:
-        
-            res = self.db.get_timestamp(self.user_data[USER_INDEXES.ID])
-            if res == None:
-                late = 0
-                early = 0
-                time = DateTimeHelper().get_str_time() 
-                difference = DateTimeHelper().substract_str_time(self.user_data[USER_INDEXES.CLOCK_IN_TIME], time)
-                if difference < -5:
-                    late=1
-                self.db.create_timestamp([time, "", late, early, 0, "", self.user_data[USER_INDEXES.ID]])
-                self.message.text = f"Successfully clocked in at {time}"
-            else:
-                self.message.text = "You already clocked in."
-        except Exception as e:
-            er = f"ERROR: {e}"
-            self.message.text = er
-
-    def clock_out(self):
-        """Add the clock out time to the user timestamp"""
-        try:
-            timestamp = self.db.get_timestamp(self.user_data[USER_INDEXES.ID])
-            user_id = self.user_data[USER_INDEXES.ID]
-            early = 0
-            time = DateTimeHelper().get_str_time() 
-            difference = DateTimeHelper().substract_str_time(self.user_data[USER_INDEXES.CLOCK_OUT_TIME], time)
-            if difference > 5:
-                early = 1
-            if timestamp[TIMESTAMP_INDEXES.CLOCK_OUT] == "":
-                self.db.update_timestamp(user_id, {"clock_out": time, "too_early":early})
-                self.message.text = f"Successfully clocked out at {time}"
-            else:
-                self.message.text = "You already clocked out."
-        except Exception as e:
-            er = f"ERROR: {e}"
-            self.message.text = er
-
-    def go_back(self, instance):
-        app = App.get_running_app()
-
-        if self.user_data[USER_INDEXES.IS_ADMIN] == 1:
-            app.root.current = "main_menu"
-        else:
-            app.root.current = "login"
-
-    def set_user_data(self, data):
-        self.user_data = data
-        self.welcome.text = f"Welcome {self.user_data[USER_INDEXES.FIRST_NAME]}" 
 
 class UserAdminCreateUserLayout(GridLayout):
     def __init__(self, **kwargs):

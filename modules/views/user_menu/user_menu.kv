@@ -1,0 +1,54 @@
+#:kivy 2.0.0
+<ImageButton>:
+    pressed: None
+    released: None
+
+<UserMenuGridLayout>:
+    cols: 1
+    padding: 75
+    spacing: 20
+    minimum_height: 30
+    
+
+    Label:
+        id: title_label
+        font_size: 40
+        color: "#878dfa"
+
+    GridLayout:
+        cols: 2
+        size_hint_y: None
+        height: 400
+
+        ImageButton:
+            source: "resources/in_released.png"
+            released: "resources/in_released.png"
+            pressed: "resources/in_pressed.png"
+            on_release: root.clock_in(message_label)
+            on_press: self.on_press()
+
+        ImageButton:
+            source: "resources/out_released.png"
+            released: "resources/out_released.png"
+            pressed: "resources/out_pressed.png"
+            on_release: root.clock_out(message_label)
+            on_press: self.on_press()
+
+    GridLayout:
+        rows: 2
+        size: (0.5,0.3)
+        row_default_height: 30
+        row_force_default: True
+        center: (0.5,0.5)
+        Button:
+            text: "Exit"
+            size_hint: (1,1)
+            background_color: "#878DFA"
+            on_press: root.go_back(args)
+
+        Label:
+            id: message_label
+            color: "red"
+            size_hint: (1,1)
+
+    
