@@ -6,12 +6,19 @@ from .helpers import USER_INDEXES
 def encrypt(string):
     return hashlib.sha256(string.encode('utf-8')).hexdigest() 
 
+class SQLite:
+    def __init__(self, file="database.db"):
+        self.file = file
+    
+    def __enter__(self):
+        self.conn = sqlite3.connect(self.file)
+        return self.conn
+
+    def __exit__(self, type, value, traceback):
+        self.conn.close()
+
 class Database:
     """Database class handler to manage all the users info, etc."""
-    def __init__(self, database_name = "database.db"):
-        self.database_name = database_name
-        self.database = sqlite3.connect(self.database_name)
-        self.cursor = self.database.cursor()
     
     #create a table if not exist
     def create_table(self, name, fields):
@@ -22,13 +29,14 @@ class Database:
                     {"id": "INT", "name": "TEXT", "phone": "TEXT"}
         """
         try:
-            fields_str = [] 
-            for field in fields.keys():
-                fields_str.append(f"{field} {fields[field]}")
-            query = f"CREATE TABLE IF NOT EXISTS {name} ({(',').join(fields_str)});"
-            self.cursor.execute(query)
-            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{name}';").fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                fields_str = [] 
+                for field in fields.keys():
+                    fields_str.append(f"{field} {fields[field]}")
+                query = f"CREATE TABLE IF NOT EXISTS {name} ({(',').join(fields_str)});"
+                cursor.execute(query)
+                result = cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name='{name}';").fetchone()
+                return result
         except sqlite3.DatabaseError as e:
             er = f"ERROR: Unable to create table {e}"
             print(er)
@@ -41,9 +49,10 @@ class Database:
             name: string with the table name.
         """
         try:
-            self.cursor.execute("DROP TABLE IF EXISTS ?;", [name])
-            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = ?;", [name]).fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                cursor.execute("DROP TABLE IF EXISTS ?;", [name])
+                result = cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = ?;", [name]).fetchone()
+                return result
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to delete table {e}"
             print(er)
@@ -61,18 +70,19 @@ class Database:
                           table field for the reference
         """
         try:
-            fields_string = []
-            for key in fields.keys():
-                fields_string.append(f"{key} {fields[key]}")
+            with SQLite("database.db") as cursor:
+                fields_string = []
+                for key in fields.keys():
+                    fields_string.append(f"{key} {fields[key]}")
 
-            query = f"""CREATE TABLE IF NOT EXISTS {name} (
-            {','.join(fields_string)}, 
-            FOREIGN KEY ({field_id}) REFERENCES {parent_name} ({parent_field})
-            ON DELETE CASCADE
-            );"""
-            self.cursor.execute(query)
-            result = self.cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;", [name]).fetchone()
-            return result
+                query = f"""CREATE TABLE IF NOT EXISTS {name} (
+                {','.join(fields_string)}, 
+                FOREIGN KEY ({field_id}) REFERENCES {parent_name} ({parent_field})
+                ON DELETE CASCADE
+                );"""
+                cursor.execute(query)
+                result = cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;", [name]).fetchone()
+                return result
 
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to create child table {e}"
@@ -86,14 +96,18 @@ class Database:
             data: An array with the values in this order:
                     [first_name, last_name, eid, password, clock_in_time, clock_out_time, is_admin]
         """
+        print(f"Data received: {data}")
         try:
-            data[3] = encrypt(data[3]) #encrypt password
-            fields = ["first_name", "last_name", "eid", "password", "clock_in_time", "clock_out_time", "is_admin"]
-            query = f"INSERT INTO users ({','.join(fields)}) VALUES ({str(data)[1:-1]});"
-            self.cursor.execute(query)
-            self.database.commit()
-            result = self.cursor.execute(f"SELECT * FROM users WHERE first_name = '{data[0]}' AND last_name = '{data[1]}' AND eid = '{data[2]}';").fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                data[3] = encrypt(data[3]) #encrypt password
+                fields = ["first_name", "last_name", "eid", "password", "clock_in_time", "clock_out_time", "is_admin"]
+                print(f"Fields: {','.join(fields)}")
+                print(f"Data to query: {str(data)[1:-1]}")
+                query = f"INSERT INTO users ({','.join(fields)}) VALUES ({str(data)[1:-1]});"
+                cursor.execute(query)
+                cursor.commit()
+                result = cursor.execute(f"SELECT * FROM users WHERE first_name = ? AND last_name = ? AND eid = ?;",[data[0], data[1], data[2]]).fetchone()
+                return result
         
         except sqlite3.DatabaseError as e:
             er =f"ERROR: Unable to create user {e}"
@@ -111,14 +125,15 @@ class Database:
         """
 
         try:
-            column_set = []
-            for column in fields.keys():
-                column_set.append(f"{column} = '{fields[column]}'")
-            query = f"UPDATE users SET {','.join(column_set)} WHERE id = {id};"
-            self.cursor.execute(query)
-            self.database.commit()
-            result = self.cursor.execute(f"SELECT * FROM users WHERE id = '{id}';").fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                column_set = []
+                for column in fields.keys():
+                    column_set.append(f"{column} = '{fields[column]}'")
+                query = f"UPDATE users SET {','.join(column_set)} WHERE id = {id};"
+                cursor.execute(query)
+                cursor.commit()
+                result = self.cursor.execute(f"SELECT * FROM users WHERE id = '{id}';").fetchone()
+                return result
         
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to update user {e}"
@@ -131,8 +146,9 @@ class Database:
             eid: a string with the user EID
         """
         try:
-            result = self.cursor.execute(f"SELECT * FROM users WHERE eid='{eid}'").fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                result = cursor.execute(f"SELECT * FROM users WHERE eid='{eid}'").fetchone()
+                return result
         except sqlite3.DatabaseError as e:
             er=f"ERROR: user not found {e}"
             print(er)
@@ -141,8 +157,9 @@ class Database:
     def get_all_users(self):
         """Return all the users in the database"""
         try:
-            result = self.cursor.execute("SELECT id, first_name, last_name, eid, clock_in_time, clock_out_time, is_admin FROM users;").fetchall()
-            return result
+            with SQLite("database.db") as cursor:
+                result = cursor.execute("SELECT id, first_name, last_name, eid, clock_in_time, clock_out_time, is_admin FROM users;").fetchall()
+                return result
         except sqlite3.DatabaseError as e:
             er = f"ERROR: {e}"
             print(er)
@@ -156,14 +173,15 @@ class Database:
                     [clock_in, clock_out, late, too_early, exception, exception_description, user]
         """
         try:
-            date = datetime.today().strftime("%m/%d/%Y")
-            data.insert(0, str(date))
-            fields = ["date", "clock_in", "clock_out", "late", "too_early", "exception", "exception_description", "user"]
-            query = f"INSERT INTO timestamp ({','.join(fields)}) VALUES ({str(data)[1:-1]});"
-            self.cursor.execute(query)
-            self.database.commit()
-            result =  self.cursor.execute(f"SELECT * FROM timestamp WHERE date='{date}' and user={data[-1]}").fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                date = datetime.today().strftime("%m/%d/%Y")
+                data.insert(0, str(date))
+                fields = ["date", "clock_in", "clock_out", "late", "too_early", "exception", "exception_description", "user"]
+                query = f"INSERT INTO timestamp ({','.join(fields)}) VALUES ({str(data)[1:-1]});"
+                cursor.execute(query)
+                cursor.commit()
+                result =  cursor.execute(f"SELECT * FROM timestamp WHERE date='{date}' and user={data[-1]}").fetchone()
+                return result
 
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to create timestamp {e}"
@@ -173,15 +191,15 @@ class Database:
     def get_all_timestamps_form_user(self, user_id):
         """Returns all the timestamps from the given user"""
         try:
-            result = self.cursor.execute(f"SELECT * FROM timestamp WHERE user='{user_id}'").fetchall()
-            return result
+            with SQLite("database.db") as cursor:
+                result = cursor.execute(f"SELECT * FROM timestamp WHERE user='{user_id}'").fetchall()
+                return result
         
         except sqlite3.DatabaseError as e:
             er = f"ERROR: {e}"
             print(er)
             return(er)
         
-
     #get a timestamp
     def get_timestamp(self, eid, date=datetime.today().strftime("%m/%d/%Y")):
         """Get a user given timestamp by EID and date
@@ -191,9 +209,10 @@ class Database:
                     date if no value is given
         """
         try:
-            query = f"SELECT * FROM timestamp WHERE date='{date}' and user='{eid}'"
-            result = self.cursor.execute(query).fetchone()
-            return result
+            with SQLite("database.db") as cursor:
+                query = f"SELECT * FROM timestamp WHERE date='{date}' and user='{eid}'"
+                result = cursor.execute(query).fetchone()
+                return result
         
         except sqlite3.DatabaseError as e:
             er = f"ERROR: unable to retrieve the timestamp {e}"
@@ -207,15 +226,16 @@ class Database:
             id: an integer with the user id
         """
         try:
-            column_set = []
-            for column in fields.keys():
-                column_set.append(f"{column} = '{fields[column]}'")
-            query = f"UPDATE timestamp SET {','.join(column_set)} WHERE date='{date}' AND user={user_id};" 
-            self.cursor.execute(query)
-            self.database.commit()
-            result =  self.cursor.execute(f"SELECT * FROM timestamp WHERE date='{date}' AND user={user_id};").fetchone()
-            print(result)
-            return result
+            with SQLite("database.db") as cursor:
+                column_set = []
+                for column in fields.keys():
+                    column_set.append(f"{column} = '{fields[column]}'")
+                query = f"UPDATE timestamp SET {','.join(column_set)} WHERE date='{date}' AND user={user_id};" 
+                cursor.execute(query)
+                cursor.commit()
+                result =  cursor.execute(f"SELECT * FROM timestamp WHERE date='{date}' AND user={user_id};").fetchone()
+                print(result)
+                return result
 
         except sqlite3.DatabaseError as e:
             er = f"ERROR: Unable to update the timestamp {e}"
@@ -230,29 +250,19 @@ class Database:
                         {"eid": "EID123456", "password": "asdf123!#"}
         """
         try:
-            user = self.cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
-            print(credentials)
-            if user:
-                if user[USER_INDEXES.PASSWORD] == encrypt(credentials['password']):
-                    return {"is_loged": True, "response": user}
+            with SQLite("database.db") as cursor:
+                user = cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
+                print(credentials)
+                if user:
+                    if user[USER_INDEXES.PASSWORD] == encrypt(credentials['password']):
+                        return {"is_loged": True, "response": user}
+                    else:
+                        return "Invalid password."
                 else:
-                    return "Invalid password."
-            else:
-                return "User not found"
+                    return "User not found"
 
         except sqlite3.DatabaseError as e:
             er = f"ERROR: An error has occurred {e}"
-            print(er)
-            return er
-
-    #close the database connection
-    def close(self):
-        """Close the database connection"""
-        try:
-           self.cursor.close()
-           self.database.close()
-        except sqlite3.DatabaseError as e:
-            er = f"ERROR: Unable to close database {e}"
             print(er)
             return er
 
@@ -261,7 +271,7 @@ class Database:
         try:
             self.create_table("users", {"id": "INTEGER PRIMARY KEY", "first_name": "TEXT", "last_name": "TEXT", "eid": "TEXT", "password": "TEXT", "is_admin": "INT", "clock_in_time": "TEXT", "clock_out_time": "TEXT"})
             self.create_child_table("timestamp", {"id": "INTEGER PRIMARY KEY", "date": "TEXT", "clock_in": "STRING", "clock_out": "STRING", "late": "INT", "too_early": "INT", "exception": "INT", "exception_description": "TEXT", "user": "INT"}, "user", "users", "id")
-            self.close()
+
         except sqlite3.DatabaseError as e:
             er = f"ERROR: Unable to initialize the database {e}"
             print(er)
@@ -269,24 +279,7 @@ class Database:
 
 if __name__ == '__main__':
     db = Database()
-    #res = db.create_table("users", {"id": "INTEGER PRIMARY KEY", "first_name": "TEXT", "last_name": "TEXT", "eid": "TEXT", "password": "TEXT", "is_admin": "INT", "clock_in_time": "TEXT", "clock_out_time": "TEXT"})
-    #print(f"Create table: \n {res}")
-    #res = db.create_child_table("timestamp", {"id": "INTEGER PRIMARY KEY", "date": "TEXT", "clock_in": "STRING", "clock_out": "STRING", "late": "INT", "too_early": "INT", "exception": "INT", "exception_description": "TEXT", "user": "INT"}, "user", "users", "id")
-    #print(f"Create child table: \n {res}")
-    #res = db.create_user(["Wilson", "Romero", "EID123456", "Wilson4291", "10:50AM", "19:00PM", 1])
-    #print(f"Create user: \n{res}")
-    #db.create_user(["Alejandra", "Alvarez", "EID123457", "alejandra0193", "10:00AM", "18:30PM", 0])
-    #db.create_user(["Alison", "Romero", "EID123458", "alison2018", "10:00AM", "18:30PM", 0])
-    #db.create_user(["Samuel", "Romero", "EID123459", "samuel2020", "9:00AM", "17:30PM", 0])
-    #res = db.create_timestamp(["", "", 0, 0, 0, "", 1])
-    #print(f"Create timestamp: \n{res}")
-    #res = db.update_user(1,{"is_admin": 0})
-    #print(f"Update user: \n{res}")
-    #res = db.update_user(1,{"is_admin": 1})
-    #print(f"Updated user again: \n {res}")
-    #res = db.update_timestamp(1, {"clock_in": "10:50AM"})
-    #print(f"Updated timestamp: \n {res}")
-    
+   
     res = db.login({"eid": "EID123457", "password": "alejandra0193"})
     print(res)
     res = db.login({"eid": "EID123459", "password": "samuel2020"})

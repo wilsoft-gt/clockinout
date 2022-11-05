@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from dataclasses import dataclass
 from time import time
+import re
 
 @dataclass
 class User_data:
@@ -15,6 +16,13 @@ class User_data:
 class dotdict(dict):
     """Dot notation to dictionary attributes"""
     __getattr__ = dict.get
+
+def is_time_format(value):
+    result = re.match(r"^(2[0-3]|[01]?[0-9]):([0-5]?[0-9])[A-z][A-z]$",value)
+    if result:
+        return True
+
+    return False
 
 @dataclass
 class DateTimeHelper:

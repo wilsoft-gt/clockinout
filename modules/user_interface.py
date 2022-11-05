@@ -1,33 +1,34 @@
+import csv
+from datetime import datetime
+from sys import modules
 from .sqlite_handler import Database
 from .helpers import USER_INDEXES, TIMESTAMP_INDEXES, DateTimeHelper, User_data
-from datetime import datetime
-import csv
+
+from kivy.app import App
+from kivy.metrics import dp
 from kivy.lang import Builder
+from kivy.core.window import Window
+from kivy.uix.label import Label
+from kivy.uix.image import Image
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.filechooser import FileChooserIconView
+from kivy.uix.screenmanager import ScreenManager, Screen, RiseInTransition
 
 from .views.login.login import LoginGridLayout
 Builder.load_file('modules/views/login/loginApp.kv')
 
-from .views.main_layout.main_layout import AdminMainLayout
-Builder.load_file('modules/views/main_layout/main_layout.kv')
-
 from .views.user_menu.user_menu import UserMenuGridLayout
 Builder.load_file('modules/views/user_menu/user_menu.kv')
 
+from .views.main_layout.main_layout import AdminMainLayout
+Builder.load_file('modules/views/main_layout/main_layout.kv')
 
-from kivy.app import App
-from kivy.metrics import dp
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.image import Image
-from kivy.uix.textinput import TextInput
-from kivy.uix.filechooser import FileChooserIconView
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.core.window import Window
-from kivy.uix.screenmanager import ScreenManager, Screen, RiseInTransition
-from kivy.uix.behaviors import ButtonBehavior
-
-
+from .views.create_user.create_user import UserAdminCreateUserLayout
+Builder.load_file('modules/views/create_user/create_user.kv')
 
 class ImageButton(ButtonBehavior, Image):
     def __init__(self, released, pressed, callback, **kwargs):
@@ -43,78 +44,6 @@ class ImageButton(ButtonBehavior, Image):
     def on_release(self):
         self.source = self.released
         self.callback()
-
-class UserAdminCreateUserLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(UserAdminCreateUserLayout, self).__init__(**kwargs)
-        self.db = Database()
-        self.user_data = []
-        self.cols = 1
-        self.padding=(20,10)
-        self.spacing = 40 
-        self.minimum_height= 10
-        self.height = (10, 10)
-
-        self.title = Label(text="Create user", font_size=40, bold=True, color="#666AAD")
-        self.add_widget(self.title)
-
-        #input menu grid
-        self.form_grid = GridLayout(cols=2, spacing=10, size_hint_y=5, row_default_height=40, row_force_default=True, pos_hint={"center_x": 0.5, "center_y": 0.5})
-
-        self.form_grid.add_widget(Label(text="First Name", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.first_name_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.first_name_input)
-
-        self.form_grid.add_widget(Label(text="Last Name", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.last_name_inupt = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.last_name_inupt)
-
-        self.form_grid.add_widget(Label(text="EID", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.eid_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.eid_input)
-
-        self.form_grid.add_widget(Label(text="Is admin", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.is_admin_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.is_admin_input)
-
-        self.form_grid.add_widget(Label(text="Clock in time", color="#878dfa", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.clock_in_time_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.clock_in_time_input)
-
-        self.form_grid.add_widget(Label(text="Clock out time", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.clock_out_time_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.clock_out_time_input)
-
-        self.form_grid.add_widget(Label(text="Password", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.password_input = TextInput(multiline=False, write_tab=False)
-        self.form_grid.add_widget(self.password_input)
-
-        self.add_widget(self.form_grid)
-
-        #bottom buttons
-        self.bottom_grid = GridLayout(cols=3, spacing=10, row_default_height=30, row_force_default=True, pos_hint=(0.5,0.5))
-        
-        self.cancel_button = Button(text="Cancel", on_press=self.go_back,background_color = "#878DFA")
-        self.save_button = Button(text="Save", on_press=self.save_new_data,background_color = "#878DFA")
-        self.bottom_grid.add_widget(self.cancel_button)
-        self.bottom_grid.add_widget(Label())
-        self.bottom_grid.add_widget(self.save_button)
-
-        self.add_widget(self.bottom_grid)
-
-    def save_new_data(self, instance):
-        self.user_data.append(self.first_name_input.text)
-        self.user_data.append(self.last_name_inupt.text)
-        self.user_data.append(self.eid_input.text)
-        self.user_data.append(self.password_input.text)
-        self.user_data.append(self.clock_in_time_input.text)
-        self.user_data.append(self.clock_out_time_input.text)
-        self.user_data.append(int(self.is_admin_input.text))
-        self.db.create_user(self.user_data)
-
-    def go_back(self, instance):
-        app = App.get_running_app()
-        app.root.current = "main_menu"
 
 class UserAdminUpdateTimestampLayout(GridLayout):
     def __init__(self, **kwargs):
