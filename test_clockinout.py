@@ -54,5 +54,5 @@ def test_login():
     assert res == "Invalid password."
 
 if __name__ == '__main__':
-    pytest.main(["-v", "--tb=line", "-rN", __file__])
+    pytest.main(["--verbose", "--tb=line", "-rN", __file__])
     os.remove(db_name)

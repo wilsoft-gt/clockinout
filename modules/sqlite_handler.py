@@ -19,7 +19,9 @@ class SQLite:
 
 class Database:
     """Database class handler to manage all the users info, etc."""
-    
+    def __init__(self, name="database.db"):
+        self.db_name = name
+
     #create a table if not exist
     def create_table(self, name, fields):
         """Create a table with the given name.
@@ -29,7 +31,7 @@ class Database:
                     {"id": "INT", "name": "TEXT", "phone": "TEXT"}
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 fields_str = [] 
                 for field in fields.keys():
                     fields_str.append(f"{field} {fields[field]}")
@@ -49,7 +51,7 @@ class Database:
             name: string with the table name.
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 cursor.execute("DROP TABLE IF EXISTS ?;", [name])
                 result = cursor.execute(f"SELECT count(*) FROM sqlite_master WHERE type='table' AND name = ?;", [name]).fetchone()
                 return result
@@ -70,7 +72,7 @@ class Database:
                           table field for the reference
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 fields_string = []
                 for key in fields.keys():
                     fields_string.append(f"{key} {fields[key]}")
@@ -96,13 +98,11 @@ class Database:
             data: An array with the values in this order:
                     [first_name, last_name, eid, password, clock_in_time, clock_out_time, is_admin]
         """
-        print(f"Data received: {data}")
+
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 data[3] = encrypt(data[3]) #encrypt password
                 fields = ["first_name", "last_name", "eid", "password", "clock_in_time", "clock_out_time", "is_admin"]
-                print(f"Fields: {','.join(fields)}")
-                print(f"Data to query: {str(data)[1:-1]}")
                 query = f"INSERT INTO users ({','.join(fields)}) VALUES ({str(data)[1:-1]});"
                 cursor.execute(query)
                 cursor.commit()
@@ -125,14 +125,14 @@ class Database:
         """
 
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 column_set = []
                 for column in fields.keys():
                     column_set.append(f"{column} = '{fields[column]}'")
                 query = f"UPDATE users SET {','.join(column_set)} WHERE id = {id};"
                 cursor.execute(query)
                 cursor.commit()
-                result = self.cursor.execute(f"SELECT * FROM users WHERE id = '{id}';").fetchone()
+                result = cursor.execute(f"SELECT * FROM users WHERE id = '{id}';").fetchone()
                 return result
         
         except sqlite3.DatabaseError as e:
@@ -146,7 +146,7 @@ class Database:
             eid: a string with the user EID
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 result = cursor.execute(f"SELECT * FROM users WHERE eid='{eid}'").fetchone()
                 return result
         except sqlite3.DatabaseError as e:
@@ -157,7 +157,7 @@ class Database:
     def get_all_users(self):
         """Return all the users in the database"""
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 result = cursor.execute("SELECT id, first_name, last_name, eid, clock_in_time, clock_out_time, is_admin FROM users;").fetchall()
                 return result
         except sqlite3.DatabaseError as e:
@@ -173,7 +173,7 @@ class Database:
                     [clock_in, clock_out, late, too_early, exception, exception_description, user]
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 date = datetime.today().strftime("%m/%d/%Y")
                 data.insert(0, str(date))
                 fields = ["date", "clock_in", "clock_out", "late", "too_early", "exception", "exception_description", "user"]
@@ -191,7 +191,7 @@ class Database:
     def get_all_timestamps_form_user(self, user_id):
         """Returns all the timestamps from the given user"""
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 result = cursor.execute(f"SELECT * FROM timestamp WHERE user='{user_id}'").fetchall()
                 return result
         
@@ -209,7 +209,7 @@ class Database:
                     date if no value is given
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 query = f"SELECT * FROM timestamp WHERE date='{date}' and user='{eid}'"
                 result = cursor.execute(query).fetchone()
                 return result
@@ -220,20 +220,20 @@ class Database:
             return er
 
     #Update a timestamp
-    def update_timestamp(self, user_id, fields, date=datetime.today().strftime("%m/%d/%Y")):
+    def update_timestamp(self, user_id, fields, timestamp_id):
         """Update a timestamp with the given data and user id
             [Arguments]
             id: an integer with the user id
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 column_set = []
                 for column in fields.keys():
                     column_set.append(f"{column} = '{fields[column]}'")
-                query = f"UPDATE timestamp SET {','.join(column_set)} WHERE date='{date}' AND user={user_id};" 
+                query = f"UPDATE timestamp SET {','.join(column_set)} WHERE id='{timestamp_id}' AND user={user_id};" 
                 cursor.execute(query)
                 cursor.commit()
-                result =  cursor.execute(f"SELECT * FROM timestamp WHERE date='{date}' AND user={user_id};").fetchone()
+                result =  cursor.execute(f"SELECT * FROM timestamp WHERE id='{timestamp_id}' AND user={user_id};").fetchone()
                 print(result)
                 return result
 
@@ -250,7 +250,7 @@ class Database:
                         {"eid": "EID123456", "password": "asdf123!#"}
         """
         try:
-            with SQLite("database.db") as cursor:
+            with SQLite(self.db_name) as cursor:
                 user = cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
                 print(credentials)
                 if user:

@@ -1,17 +1,13 @@
 import csv
-from datetime import datetime
-from sys import modules
 from .sqlite_handler import Database
-from .helpers import USER_INDEXES, TIMESTAMP_INDEXES, DateTimeHelper, User_data
+from .helpers import USER_INDEXES, TIMESTAMP_INDEXES
 
 from kivy.app import App
-from kivy.metrics import dp
 from kivy.lang import Builder
 from kivy.core.window import Window
 from kivy.uix.label import Label
 from kivy.uix.image import Image
 from kivy.uix.button import Button
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.behaviors import ButtonBehavior
@@ -45,129 +41,8 @@ class ImageButton(ButtonBehavior, Image):
         self.source = self.released
         self.callback()
 
-class UserAdminUpdateTimestampLayout(GridLayout):
-    def __init__(self, **kwargs):
-        super(UserAdminUpdateTimestampLayout, self).__init__(**kwargs)
-        self.db = Database()
-        self.timestamp_data = []
-        self.updated_timestamp = {}
-        self.user_data = []
-        self.cols = 1
-        self.padding=(20,10)
-        self.spacing = 40 
-        self.minimum_height= 10
-        self.height = (10, 10)
-
-        self.title = Label(text="Update Timestamp", font_size=40, size_hint_y=0.5, bold=True, color="#666AAD")
-        self.add_widget(self.title)
-
-        #search option at the top
-        self.search_grid = GridLayout(cols=3, spacing=10, size_hint_y=None, row_default_height=30, row_force_default=True, pos_hint={"center_x": 0.5, "center_y": 0.5})
-        self.search_grid.add_widget(Label(text="User EID", color="#878dfa", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.search_grid.add_widget(Label(text="Date", color="#878dfa", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.search_grid.add_widget(Label())
-
-        self.search_eid = TextInput()
-        self.search_date = TextInput()
-        self.do_search = Button(text="Search", on_press=self.get_timestamp_data,background_color = "#878DFA")
-        self.search_grid.add_widget(self.search_eid)
-        self.search_grid.add_widget(self.search_date)
-        self.search_grid.add_widget(self.do_search)
-
-        self.add_widget(self.search_grid)
-
-        #input menu grid
-        self.form_grid = GridLayout(cols=2, spacing=10, size_hint_y=3, row_default_height=30, row_force_default=True,pos_hint={"center_x": 0.5, "center_y": 0.5})
-        
-        self.form_grid.add_widget(Label(text="User", color="#878dfa", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.user_name = TextInput(disabled=True)
-        self.form_grid.add_widget(self.user_name)
-
-        self.form_grid.add_widget(Label(text="Clock in", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.clock_in_input = TextInput()
-        self.clock_in_input.id = "clock_in"
-        self.clock_in_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.clock_in_input)
-
-        self.form_grid.add_widget(Label(text="Clock out", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.clock_out_input = TextInput()
-        self.clock_out_input.id = "clock_out"
-        self.clock_out_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.clock_out_input)
-
-        self.form_grid.add_widget(Label(text="Late", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.late_input = TextInput()
-        self.late_input.id = "late"
-        self.late_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.late_input)
-
-        self.form_grid.add_widget(Label(text="Too early", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.too_early_input = TextInput()
-        self.too_early_input.id = "too_early"
-        self.too_early_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.too_early_input)
-
-        self.form_grid.add_widget(Label(text="Exception", color="#878dfa", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.exception_input = TextInput()
-        self.exception_input.id = "exception"
-        self.exception_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.exception_input)
-
-        self.form_grid.add_widget(Label(text="Exception Description", color="#878DFA", size_hint_x=None, width=100, text_size=self.size, valign="center", halign="left"))
-        self.exception_description_input = TextInput()
-        self.exception_description_input.id = "exception_description"
-        self.exception_description_input.bind(text=self.update_new_data)
-        self.form_grid.add_widget(self.exception_description_input)
-
-        self.add_widget(self.form_grid)
-
-        #bottom buttons
-        self.bottom_grid = GridLayout(cols=3, spacing=10, row_default_height=30, row_force_default=True, pos_hint=(0.5,0.5))
-        
-        self.cancel_button = Button(text="Cancel", on_press=self.go_back,background_color = "#878DFA")
-        self.save_button = Button(text="Save", on_press=self.save_new_data,background_color = "#878DFA")
-        self.bottom_grid.add_widget(self.cancel_button)
-        self.bottom_grid.add_widget(Label())
-        self.bottom_grid.add_widget(self.save_button)
-
-        self.add_widget(self.bottom_grid)
-
-    def get_timestamp_data(self, instance):
-        self.user_data = self.db.get_user(self.search_eid.text)
-        user_id = self.user_data[USER_INDEXES.ID]
-        user_name = f"{self.user_data[USER_INDEXES.FIRST_NAME]} {self.user_data[USER_INDEXES.LAST_NAME]}"
-        self.user_name.text = user_name
-        if self.search_date.text != "":
-            self.timestamp_data = self.db.get_timestamp(user_id, self.search_date.text)
-        else:
-            self.timestamp_data = self.db.get_timestamp(user_id)
-        self.clock_in_input.text = self.timestamp_data[TIMESTAMP_INDEXES.CLOCK_IN]
-        self.clock_out_input.text = self.timestamp_data[TIMESTAMP_INDEXES.CLOCK_OUT]
-        self.late_input.text = str(self.timestamp_data[TIMESTAMP_INDEXES.LATE])
-        self.too_early_input.text = str(self.timestamp_data[TIMESTAMP_INDEXES.TOO_EARLY])
-        self.exception_input.text = str(self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION])
-        self.exception_description_input.text = self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION_DESCRIPTION]
-    
-    def update_new_data(self, instance, value):
-        if value == "":
-            del self.updated_timestamp[instance.id]
-        else:
-            if instance.id == "late" or instance.id == "too_early" or instance.id == "exception":
-                self.updated_timestamp[instance.id] = int(value)
-            else:
-                self.updated_timestamp[instance.id] = value
- 
-    def save_new_data(self, instance):
-        user_id = self.user_data[USER_INDEXES.ID]
-        date = self.timestamp_data[TIMESTAMP_INDEXES.DATE]
-        if self.search_date == "":
-            self.db.update_timestamp(user_id, self.updated_timestamp)
-        else:
-            self.db.update_timestamp(user_id, self.updated_timestamp, date)
-
-    def go_back(self, instance):
-        app = App.get_running_app()
-        app.root.current = "main_menu"
+from .views.update_timestamp.update_timestamp import UserAdminUpdateTimestampLayout
+Builder.load_file("modules/views/update_timestamp/update_timestamp.kv")
 
 class UserAdminUpdateUserLayout(GridLayout):
     def __init__(self, **kwargs):
