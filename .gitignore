@@ -6,3 +6,4 @@ __pycache__/
 *.sql
 *.pyc
 pyvenv.cfg
+.idea/

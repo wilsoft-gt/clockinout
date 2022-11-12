@@ -1,6 +1,6 @@
 import csv
 from .sqlite_handler import Database
-from .helpers import USER_INDEXES, TIMESTAMP_INDEXES
+from .helpers import USER_INDEXES
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -52,7 +52,7 @@ class UserAdminUpdateUserLayout(GridLayout):
         self.user_data = [] 
         self.cols = 1
         self.padding=(20,10)
-        self.spacing = 40 
+        self.spacing = 20 
         self.minimum_height= 10
         self.height = (10, 10)
 

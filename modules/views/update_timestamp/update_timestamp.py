@@ -15,30 +15,66 @@ class UserAdminUpdateTimestampLayout(GridLayout):
         self.updated_timestamp = {}
         self.user_data = []
 
-    #get timestamp data and then update the fields with the retrieved data
-    def get_timestamp_data(self, instance, user_id, date_field, user_input, inputs):
-        self.user_data = self.db.get_user(user_id.text)
-        user_id = self.user_data[USER_INDEXES.ID]
-        user_name = f"{self.user_data[USER_INDEXES.FIRST_NAME]} {self.user_data[USER_INDEXES.LAST_NAME]}"
-        user_input.text = user_name
 
-        if date_field.text != "":
-            self.timestamp_data = self.db.get_timestamp(user_id, date_field.text)
-        else:
-            self.timestamp_data = self.db.get_timestamp(user_id)
-
-        #TODO: Move this to a new function
-        #input is an array with all the widgets, the index is -2 because clock_in is in position 2
+    def set_data_fields(self, inputs):
+        '''
+            INFO:
+            -----
+                Populates the inputs with the retrieved data.
+                Nees to be -2 since the clock_in index is 2 because 
+                of ID has an index = 0 and date has index = 1 (check helpers module)
+            INPUT:
+            ------
+                inputs: A list of the inputs to change the text value
+        '''
         inputs[TIMESTAMP_INDEXES.CLOCK_IN-2].text = self.timestamp_data[TIMESTAMP_INDEXES.CLOCK_IN]
         inputs[TIMESTAMP_INDEXES.CLOCK_OUT-2].text = self.timestamp_data[TIMESTAMP_INDEXES.CLOCK_OUT]
         inputs[TIMESTAMP_INDEXES.LATE-2].text = str(self.timestamp_data[TIMESTAMP_INDEXES.LATE])
         inputs[TIMESTAMP_INDEXES.TOO_EARLY-2].text = str(self.timestamp_data[TIMESTAMP_INDEXES.TOO_EARLY])
         inputs[TIMESTAMP_INDEXES.EXCEPTION-2].text = str(self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION])
         inputs[TIMESTAMP_INDEXES.EXCEPTION_DESCRIPTION-2].text = self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION_DESCRIPTION]
+
+    def get_timestamp_data(self, instance, user_id, date_field, user_input, inputs, message):
+        '''
+            INFO:
+            -----
+                Retrieve the user data and timestamp from database.
+            Input:
+            ------
+                user_id: This is the user ID whose timestamp wants to be changed.
+                date_field: The date of the timestamp we want to change
+                user_info: The field that will hold the user name
+                inputs: A list of the inputs that maps to the timestamp data
+                message: The message label that will display the result
+        '''
+        try:
+            self.user_data = self.db.get_user(user_id.text)
+            user_name = f"{self.user_data[USER_INDEXES.FIRST_NAME]} {self.user_data[USER_INDEXES.LAST_NAME]}"
+            user_input.text = user_name
+
+            if date_field.text != "":
+                self.timestamp_data = self.db.get_timestamp(user_id.text, date_field.text)
+            else:
+                self.timestamp_data = self.db.get_timestamp(user_id.text)
+
+            #populate data
+            self.set_data_fields(inputs)
+        except Exception as e:
+            message.color = "red"
+            message.text = f"{e}"
     
 
     def update_new_data(self, instance, value):
-        #the .name property is a custom property to hold the widget id
+        '''
+            INFO:
+            -----
+                Update the dictionary that will hold the updated value
+
+            INPUT:
+            ------
+                instance: the text input instance that is being changed
+                value: the new value
+        '''
         if value == "":
             del self.updated_timestamp[instance.name]
         else:
@@ -49,17 +85,28 @@ class UserAdminUpdateTimestampLayout(GridLayout):
  
     
     def save_new_data(self, date_field, message):
-        #date_field is the widget that holds the date to search
-        user_id = self.user_data[USER_INDEXES.ID]
-        timestamp_id = self.timestamp_data[TIMESTAMP_INDEXES.ID]
-        if date_field.text == "":
-            self.db.update_timestamp(user_id, self.updated_timestamp)
-        else:
-            self.db.update_timestamp(user_id, self.updated_timestamp, timestamp_id)
+        '''
+            INFO:
+            -----
+                Save the new data to the database
+            INPUT:
+            ------
+                date_field: The field that holds the date to be updated
+        '''
+        try:
+            user_id = self.user_data[USER_INDEXES.ID]
+            timestamp_id = self.timestamp_data[TIMESTAMP_INDEXES.ID]
+            if date_field.text == "":
+                self.db.update_timestamp(user_id, self.updated_timestamp)
+            else:
+                self.db.update_timestamp(user_id, self.updated_timestamp, timestamp_id)
 
-        message.text = "Data has been modified!"
-        
+            message.text = "Data has been modified!"
+        except Exception as e:
+            message.color = "red"
+            message.text = f"{e}"
 
     def go_back(self):
+        '''Returns to the main menu'''
         app = App.get_running_app()
         app.root.current = "main_menu"
