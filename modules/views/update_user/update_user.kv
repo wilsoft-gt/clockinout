@@ -1,0 +1,181 @@
+#:kivy 2.0.0
+
+#<CustomLabel@Label>:
+#    text: "this is the custom widget"
+#    color: "#878DFA"
+#    size_hint_x: None
+#    width: 100
+#    text_size: self.size
+#    valign: "center"
+#    halign: "left"
+#
+#<CustomGrid@GridLayout>:
+#    cols: 2
+#    spacing: 10
+#    size_hint_y: None
+#    row_default_height: 30
+#    row_force_default: True
+#    pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+<UserAdminUpdateUserLayout>:
+    cols: 1
+    padding: (20,10)
+    spacing: 20
+    minimum_height: 10
+    height: (10,10)
+
+    Label:
+        id: title_label
+        text: "Update User"
+        font_size: 40
+        size_hint_y: 0.5
+        bold: True
+        color: "#666AAD"
+
+    GridLayout:
+        cols: 2
+        spacing: 10
+        size_hint_y: None
+        row_default_height: 30
+        row_force_default: True
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+        Label:
+            id: user_id
+            text: "User EID"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        
+        Label:
+            id: user_id
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+
+        TextInput:
+            id: search_eid
+
+        Button:
+            text: "Search"
+            background_color: "#878DFA"
+            on_press: root.get_user_data(search_eid, [first_name, last_name, eid, is_admin, clock_in, clock_out], message)
+
+    GridLayout:
+        cols: 2
+        spacing: 10
+        size_hint_y: 2
+        row_default_height: 30
+        row_force_default: True
+        pos_hint: {"center_x": 0.5, "center_y": 0.5}
+
+        Label:
+            id: first_name_label
+            text: "First Name"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: first_name
+            name: "first_name"
+            on_text: root.update_new_data(self)
+
+        Label:
+            id: last_name_label
+            text: "Last Name"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: last_name
+            name: "last_name"
+            on_text: root.update_new_data(self)
+
+        Label:
+            id: eid_label
+            text: "EID"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: eid
+            name: "eid_name"
+            on_text: root.update_new_data(self)
+
+
+        Label:
+            id: is_admin_label
+            text: "Is Administrator"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: is_admin
+            name: "is_admin"
+            on_text: root.update_new_data(self)
+
+        Label:
+            id: clock_in_label
+            text: "Clock in"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: clock_in
+            name: "clock_in"
+            on_text: root.update_new_data(self)
+
+        Label:
+            id: clock_out_label
+            text: "Clock out"
+            color: "#878DFA"
+            size_hint_x: None
+            width: 100
+            text_size: self.size
+            valign: "center"
+            halign: "left"
+        TextInput:
+            id: clock_out
+            name: "clock_out"
+            on_text: root.update_new_data(self)
+
+    GridLayout:
+        cols: 3
+        spacing: 10
+        row_default_height: 30
+        row_force_default: True
+        pos_hint: (0.5,0.5)
+        Button:
+            text: "Cancel"
+            background_color: "#878DFA"
+            on_press: root.go_back()
+
+        Label:
+            id: message
+        
+        Button:
+            text: "Save"
+            background_color: "#878DFA"
+            on_press: root.save_new_data(message)
+
