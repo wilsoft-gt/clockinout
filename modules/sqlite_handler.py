@@ -252,6 +252,7 @@ class Database:
         try:
             with SQLite(self.db_name) as cursor:
                 user = cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
+                print(user)
                 print(credentials)
                 if user:
                     if user[USER_INDEXES.PASSWORD] == encrypt(credentials['password']):
@@ -271,7 +272,7 @@ class Database:
         try:
             self.create_table("users", {"id": "INTEGER PRIMARY KEY", "first_name": "TEXT", "last_name": "TEXT", "eid": "TEXT", "password": "TEXT", "is_admin": "INT", "clock_in_time": "TEXT", "clock_out_time": "TEXT"})
             self.create_child_table("timestamp", {"id": "INTEGER PRIMARY KEY", "date": "TEXT", "clock_in": "STRING", "clock_out": "STRING", "late": "INT", "too_early": "INT", "exception": "INT", "exception_description": "TEXT", "user": "INT"}, "user", "users", "id")
-
+            self.create_user(["admin", "admin", "EID123456","ASDF123ASDF", "10:50am", "18:40pm", 1])
         except sqlite3.DatabaseError as e:
             er = f"ERROR: Unable to initialize the database {e}"
             print(er)

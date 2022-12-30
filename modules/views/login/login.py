@@ -1,8 +1,8 @@
 from modules.sqlite_handler import Database
+from modules.helpers import USER_INDEXES
 
 from kivy.app import App
 
-from modules.helpers import USER_INDEXES
 from kivy.uix.gridlayout import GridLayout
 
 class LoginGridLayout(GridLayout):

@@ -71,3 +71,6 @@ PRIMARY = "#878DFA"
 PRMARY_DARK = "#666AAD"
 BACKGROUND = "#FAE488"
 BACKGROUND_DARK = "#AD9A4C"
+
+if __name__ == "__main__":
+    print("this is just a helper module and should not be used as standard executable")

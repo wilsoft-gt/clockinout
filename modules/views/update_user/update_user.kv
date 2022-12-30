@@ -25,13 +25,13 @@
     height: (10,10)
 
     Label:
-        id: title_label
         text: "Update User"
         font_size: 40
         size_hint_y: 0.5
         bold: True
         color: "#666AAD"
 
+    #search grid
     GridLayout:
         cols: 2
         spacing: 10
@@ -61,6 +61,7 @@
 
         TextInput:
             id: search_eid
+            hint_text: "EID123456"
 
         Button:
             text: "Search"
@@ -86,6 +87,7 @@
             halign: "left"
         TextInput:
             id: first_name
+            hint_text: "John"
             name: "first_name"
             on_text: root.update_new_data(self)
 
@@ -101,6 +103,7 @@
         TextInput:
             id: last_name
             name: "last_name"
+            hint_text: "Doe"
             on_text: root.update_new_data(self)
 
         Label:
@@ -114,7 +117,8 @@
             halign: "left"
         TextInput:
             id: eid
-            name: "eid_name"
+            name: "eid"
+            hint_text: "EID123456"
             on_text: root.update_new_data(self)
 
 
@@ -130,6 +134,7 @@
         TextInput:
             id: is_admin
             name: "is_admin"
+            hint_text: "(1 = YES / 0 = NO)"
             on_text: root.update_new_data(self)
 
         Label:
@@ -143,7 +148,8 @@
             halign: "left"
         TextInput:
             id: clock_in
-            name: "clock_in"
+            name: "clock_in_time"
+            hint_text: "7:00AM"
             on_text: root.update_new_data(self)
 
         Label:
@@ -157,7 +163,8 @@
             halign: "left"
         TextInput:
             id: clock_out
-            name: "clock_out"
+            name: "clock_out_time"
+            hint_text: "17:00PM"
             on_text: root.update_new_data(self)
 
     GridLayout:
