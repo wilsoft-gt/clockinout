@@ -34,6 +34,13 @@ class UserAdminUpdateTimestampLayout(GridLayout):
         inputs[TIMESTAMP_INDEXES.EXCEPTION-2].text = str(self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION])
         inputs[TIMESTAMP_INDEXES.EXCEPTION_DESCRIPTION-2].text = self.timestamp_data[TIMESTAMP_INDEXES.EXCEPTION_DESCRIPTION]
 
+    def clear_inputs(self, inputs, search_input):
+        for input in inputs+search_input:
+            if hasattr(input, 'cursor'):
+                input.text = ''
+
+        search_input.text = ''
+
     def get_timestamp_data(self, instance, user_id, date_field, user_input, inputs, message):
         '''
             INFO:
@@ -51,11 +58,12 @@ class UserAdminUpdateTimestampLayout(GridLayout):
             self.user_data = self.db.get_user(user_id.text)
             user_name = f"{self.user_data[USER_INDEXES.FIRST_NAME]} {self.user_data[USER_INDEXES.LAST_NAME]}"
             user_input.text = user_name
+            user_db_id = self.user_data[USER_INDEXES.ID]
 
             if date_field.text != "":
-                self.timestamp_data = self.db.get_timestamp(user_id.text, date_field.text)
+                self.timestamp_data = self.db.get_timestamp(user_db_id, date_field.text)
             else:
-                self.timestamp_data = self.db.get_timestamp(user_id.text)
+                self.timestamp_data = self.db.get_timestamp(user_db_id)
 
             #populate data
             self.set_data_fields(inputs)
@@ -110,3 +118,4 @@ class UserAdminUpdateTimestampLayout(GridLayout):
         '''Returns to the main menu'''
         app = App.get_running_app()
         app.root.current = "main_menu"
+        self.clear_inputs(self.children[1].children, self.children[2].children)

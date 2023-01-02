@@ -29,12 +29,9 @@ class UserAdminUpdateUserLayout(GridLayout):
         inputs[USER_INDEXES.CLOCK_OUT_TIME-2].text = self.user_data[USER_INDEXES.CLOCK_OUT_TIME]
 
     def clear_inputs(self, inputs, search_eid):
-        inputs[USER_INDEXES.FIRST_NAME-1].text = ""
-        inputs[USER_INDEXES.LAST_NAME-1].text = ""
-        inputs[USER_INDEXES.EID-1].text = ""
-        inputs[USER_INDEXES.IS_ADMIN-2].text = ""
-        inputs[USER_INDEXES.CLOCK_IN_TIME-2].text = ""
-        inputs[USER_INDEXES.CLOCK_OUT_TIME-2].text = ""
+        for input in inputs:
+            if hasattr(input, "cursor"):
+                input.text = ""
         search_eid.text = ""
 
     def get_user_data(self, search_eid, inputs, message):
@@ -101,5 +98,7 @@ class UserAdminUpdateUserLayout(GridLayout):
             message.color = "red"
             
     def go_back(self):
+
         app = App.get_running_app()
         app.root.current = "main_menu"
+        self.clear_inputs(self.children[1].children, self.children[2].children[1])

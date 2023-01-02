@@ -135,9 +135,9 @@ class Database:
                 result = cursor.execute(f"SELECT * FROM users WHERE id = '{id}';").fetchone()
                 return result
         
-        except sqlite3.DatabaseError as e:
-            er = f"ERROR: unable to update user {e}"
-            print(e)
+        except sqlite3.DatabaseError as er:
+            er = f"ERROR: unable to update user {er}"
+            print(er)
             return er
 
     def get_user(self, eid):
@@ -234,7 +234,6 @@ class Database:
                 cursor.execute(query)
                 cursor.commit()
                 result =  cursor.execute(f"SELECT * FROM timestamp WHERE id='{timestamp_id}' AND user={user_id};").fetchone()
-                print(result)
                 return result
 
         except sqlite3.DatabaseError as e:
@@ -252,8 +251,6 @@ class Database:
         try:
             with SQLite(self.db_name) as cursor:
                 user = cursor.execute(f"SELECT * FROM users WHERE eid='{credentials['eid']}';").fetchone()
-                print(user)
-                print(credentials)
                 if user:
                     if user[USER_INDEXES.PASSWORD] == encrypt(credentials['password']):
                         return {"is_loged": True, "response": user}
@@ -272,7 +269,9 @@ class Database:
         try:
             self.create_table("users", {"id": "INTEGER PRIMARY KEY", "first_name": "TEXT", "last_name": "TEXT", "eid": "TEXT", "password": "TEXT", "is_admin": "INT", "clock_in_time": "TEXT", "clock_out_time": "TEXT"})
             self.create_child_table("timestamp", {"id": "INTEGER PRIMARY KEY", "date": "TEXT", "clock_in": "STRING", "clock_out": "STRING", "late": "INT", "too_early": "INT", "exception": "INT", "exception_description": "TEXT", "user": "INT"}, "user", "users", "id")
-            self.create_user(["admin", "admin", "EID123456","ASDF123ASDF", "10:50am", "18:40pm", 1])
+            admin_exists = self.get_user('EID123456')
+            if not admin_exists:
+                self.create_user(["admin", "admin", "EID123456","ASDF123ASDF", "10:50am", "18:40pm", 1])
         except sqlite3.DatabaseError as e:
             er = f"ERROR: Unable to initialize the database {e}"
             print(er)
@@ -280,10 +279,4 @@ class Database:
 
 if __name__ == '__main__':
     db = Database()
-   
-    res = db.login({"eid": "EID123457", "password": "alejandra0193"})
-    print(res)
-    res = db.login({"eid": "EID123459", "password": "samuel2020"})
-    print(res)
-    res = db.login({"eid": "EID123987", "password": "alison123123"})
-    print(res)
+

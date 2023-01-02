@@ -91,7 +91,6 @@ class SaveReportLayout(GridLayout):
             timestamps = self.db.get_all_timestamps_form_user(user[USER_INDEXES.ID])               
             for timestamp in timestamps:
                 comb = user + timestamp
-                print(comb)
                 data.append(comb)
        
         with open(f"{filepath}", "a") as file:
@@ -99,13 +98,10 @@ class SaveReportLayout(GridLayout):
             csv_out = csv.writer(file)
             csv_out.writerow(headers)
             for user in users:
-                print(user)
                 timestamps = self.db.get_all_timestamps_form_user(user[USER_INDEXES.ID])               
                 for timestamp in timestamps:
                     comb = user + timestamp
-                    csv_out.writerow(comb)
-                   
-        print("completado")            
+                    csv_out.writerow(comb)         
             
 
 class LoginScreen(Screen):

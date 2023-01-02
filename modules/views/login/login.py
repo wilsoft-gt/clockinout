@@ -19,7 +19,6 @@ class LoginGridLayout(GridLayout):
 
         if type(result) is dict and result["is_loged"] == True:
             is_admin=result["response"][USER_INDEXES.IS_ADMIN]
-            print(result)
             app = App.get_running_app()
             if is_admin == 1:
                 app.root.get_screen("main_menu").adminmainmenulayout.set_user_data(result["response"])

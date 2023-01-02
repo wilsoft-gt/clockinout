@@ -82,5 +82,4 @@ class UserMenuGridLayout(GridLayout):
 
     def set_user_data(self, data):
         self.user_data = data
-        print(self.children)
         self.children[2].text = f"Welcome {self.user_data[USER_INDEXES.FIRST_NAME]}" 
